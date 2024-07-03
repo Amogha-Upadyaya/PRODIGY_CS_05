@@ -1,35 +1,37 @@
-# sniffing.py
-
-import socket
+import sys
+from scapy.all import *
 
 def get_interfaces():
-  """
-  Retrieves a list of available network interfaces.
+    return [i.name for i in ifaces.values()]
 
-  Returns:
-      A list of interface names or None if no interfaces found.
-  """
-  try:
-    # Use socket library to get interface names
-    interfaces = [socket.gethostbyname(socket.gethostname())]  # Get default interface (optional)
-    return interfaces
-  except Exception as e:
-    print(f"Error getting interfaces: {e}")
-    return None
+def handle_packet(packet, log):
+    if packet.haslayer(IP):
+        src_ip = packet[IP].src
+        dst_ip = packet[IP].dst
+        protocol = packet.protocol
+        payload = packet.payload
+        log.write(f"Packet captured: {src_ip} -> {dst_ip} ({protocol})\n")
+        log.write(f"Payload: {payload}\n\n")
 
-from scapy.all import sniff
+def start_sniffing(interface="eth0", verbose=False):
+    logfile_name = f"sniffer_{interface}_log.txt"
+    with open(logfile_name, 'w') as logfile:
+        try:
+            if verbose:
+                print(f"Sniffing on interface {interface} with verbose mode enabled...")
+                sniff(iface=interface, prn=lambda pkt: handle_packet(pkt, logfile), store=0, verbose=verbose)
+            else:
+                print(f"Sniffing on interface {interface}...")
+                sniff(iface=interface, prn=lambda pkt: handle_packet(pkt, logfile), store=0)
+        except KeyboardInterrupt:
+            sys.exit(0)
 
-def start_sniffing(iface, count):
-  """
-  Sniffs packets on the specified interface and displays the captured packets.
-
-  Args:
-      iface: The network interface name to capture packets from.
-      count: The number of packets to capture.
-  """
-  try:
-    packets = sniff(count=count, iface=iface)
-    return packets  # Return captured packets for further processing (optional)
-  except Exception as e:
-    print(f"Error: {e}")
-    return None  # Indicate error (optional)
+if __name__ == "__main__":
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("Usage: python sniffing.py <interface> [verbose]")
+        sys.exit(1)
+    interface = sys.argv[1]
+    verbose = False
+    if len(sys.argv) == 3 and sys.argv[2].lower() == "verbose":
+        verbose = True
+    start_sniffing(interface, verbose)

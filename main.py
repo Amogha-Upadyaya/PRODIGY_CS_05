@@ -1,35 +1,33 @@
-# main.py
+import sniffing
 
-from sniffing import get_interfaces, start_sniffing  # Import both functions
+print("Welcome to the Network Packet Sniffer Tool!")
+print("Please select an option:")
+print("1. Start packet sniffing")
+print("2. Quit")
 
-# Get available interfaces
-interfaces = get_interfaces()
-
-if not interfaces:
-  print("Error: No network interfaces found.")
-  exit()
-
-# Print available interfaces
-print("Available network interfaces:")
-for i, interface in enumerate(interfaces):
-  print(f"{i + 1}. {interface}")
-
-# Get user input for interface selection and packet count
-choice = int(input("Choose an interface (number): ")) - 1
-if 0 <= choice < len(interfaces):
-  iface = interfaces[choice]
-else:
-  print("Invalid choice. Exiting.")
-  exit()
-
-count = int(input("Enter number of packets to capture: "))
-
-# Start sniffing and capture packets
-captured_packets = start_sniffing(iface, count)
-
-# Process captured packets (optional)
-if captured_packets:
-  print(f"Captured {len(captured_packets)} packets:")
-  # You can loop through captured_packets and process them further (e.g., print details)
-else:
-  print("No packets captured.")
+while True:
+    option = input("Enter your choice: ")
+    if option == "1":
+        interfaces = sniffing.get_interfaces()
+        print("Available network interfaces:")
+        for i, interface in enumerate(interfaces, 1):
+            print(f"{i}. {interface}")
+        interface_choice = input("Enter the number of the interface to sniff: ")
+        try:
+            interface_choice = int(interface_choice)
+            if 1 <= interface_choice <= len(interfaces):
+                interface = interfaces[interface_choice - 1]
+                verbose_choice = input("Do you want to enable verbose mode? (yes/no): ")
+                if verbose_choice.lower() == "yes":
+                    sniffing.start_sniffing(interface, verbose=True)
+                else:
+                    sniffing.start_sniffing(interface)
+            else:
+                print("Invalid interface choice. Please try again.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+    elif option == "2":
+        print("Goodbye!")
+        break
+    else:
+        print("Invalid option. Please try again.")
